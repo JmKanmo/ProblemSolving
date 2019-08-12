@@ -1,126 +1,174 @@
 #include <iostream>
-#include <vector>
 #include <queue>
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 
-const int idx1[] = { 0,-1,1,0,0 };
-const int idx2[] = { 0,0,0,1,-1 };
+typedef pair<int, int> Pos_Pair;
 
-struct shark {
-	int speed;
-	int direction;
+struct Shark
+{
+	Pos_Pair pos;
+	int velocity;
 	int size;
-	bool ismove = false;
+	char dir;
 
-	shark() {}
-	shark(int speed, int direction, int size) :speed(speed), direction(direction), size(size) {}
+	Shark() {}
+
+	Shark& operator = (const Shark& shark)
+	{
+		this->pos = shark.pos;
+		this->velocity = shark.velocity;
+		this->size = shark.size;
+		this->dir = shark.dir;
+		return *this;
+	}
+
+	Shark(Pos_Pair pos, int velocity, int size, char dir)
+	{
+		this->pos = pos;
+		this->velocity = velocity;
+		this->size = size;
+		this->dir = dir;
+	}
 };
 
-typedef pair<int, int> Pos_Pair;
-typedef pair<int, queue<shark>>Board_Pair;
+struct Board {
+	queue<Shark>q;
+};
 
-Board_Pair board[101][101];
+vector<vector<Board>>board;
+queue<Shark>shark_q;
+int R, C, M;
+int answer;
 
-int n, m, shark_cnt;
-int hunting_sum;
-
-int getReverseDirection(int direction) {
-	switch (direction) {
-	case 1: return 2;
-	case 2: return 1;
-	case 3:	return 4;
-	case 4:	return 3;
-	}
-}
-
-Pos_Pair getSharkMovedPos(Pos_Pair shark_pos,int& direction, int speed)
+Pos_Pair getNextPos(Pos_Pair pos, char& dir, int velocity)
 {
-	for (int i = 1; i <= speed; i++) {
-		Pos_Pair next = Pos_Pair(shark_pos.first + idx1[direction], shark_pos.second + idx2[direction]);
-		if (next.first<1 || next.first>n || next.second<1 || next.second>m) {
-			direction = getReverseDirection(direction);
-			next = Pos_Pair(shark_pos.first + idx1[direction], shark_pos.second + idx2[direction]);
-		}
-		shark_pos = next;
-	}
-	return shark_pos;
-}
+	if (dir == 'U' && pos.first - 1 == 0) dir = 'D';
+	if (dir == 'D' && pos.first + 1 > R) dir = 'U';
+	if (dir == 'L' && pos.second - 1 == 0) dir = 'R';
+	if (dir == 'R' && pos.second + 1 > C) dir = 'L';
 
-void shark_moving()
-{
-	for (int i = 1; i <= n; i++)
+	for (int i = 1; i <= velocity; i++)
 	{
-		for (int j = 1; j <= m; j++)
+		if (dir == 'U')
 		{
-			if (board[i][j].first != 0 && board[i][j].second.front().ismove != true)
-			{
-				Pos_Pair moved_pos = getSharkMovedPos(Pos_Pair(i, j), board[i][j].second.front().direction, board[i][j].second.front().speed);
-				board[i][j].second.front().ismove = true;
-				board[moved_pos.first][moved_pos.second].second.push(board[i][j].second.front());
-				board[i][j].second.pop();
-				if (board[i][j].second.empty() == true) board[i][j].first = 0;
-				board[moved_pos.first][moved_pos.second].first = 1;
-			}
+			pos = Pos_Pair(pos.first - 1, pos.second);
+			if (pos.first == 1) dir = 'D';
+		}
+		else if (dir == 'D')
+		{
+			pos = Pos_Pair(pos.first + 1, pos.second);
+			if (pos.first == R) dir = 'U';
+		}
+		else if (dir == 'L')
+		{
+			pos = Pos_Pair(pos.first, pos.second - 1);
+			if (pos.second == 1) dir = 'R';
+		}
+		else
+		{
+			pos = Pos_Pair(pos.first, pos.second + 1);
+			if (pos.second == C) dir = 'L';
 		}
 	}
+	return pos;
 }
 
-void shark_fight()
+void move()
 {
-	for (int i = 1; i <= n; i++)
+	while (shark_q.empty() != true)
 	{
-		for (int j = 1; j <= m; j++)
-		{
-			if (board[i][j].second.size() > 1)
-			{
-				shark max_shark = shark(0, 0, -999);
+		Shark shark = shark_q.front();
+		shark_q.pop();
+		shark.pos = getNextPos(shark.pos, shark.dir, shark.velocity);
+		board[shark.pos.first][shark.pos.second].q.push(shark);
+	}
+}
 
-				while (board[i][j].second.empty() != true)
+void merge()
+{
+	for (int i = 1; i <= R; i++)
+	{
+		for (int j = 1; j <= C; j++)
+		{
+			if (board[i][j].q.empty() != true)
+			{
+				int MAX_SIZE = 0;
+				Shark shark;
+
+				while (board[i][j].q.empty() != true)
 				{
-					shark pop_shark = board[i][j].second.front();
-					max_shark = pop_shark.size > max_shark.size ? pop_shark : max_shark;
-					board[i][j].second.pop();
+					if (MAX_SIZE < board[i][j].q.front().size)
+					{
+						MAX_SIZE = board[i][j].q.front().size;
+						shark = board[i][j].q.front();
+					}
+					board[i][j].q.pop();
 				}
-				board[i][j].second.push(max_shark);
+				board[shark.pos.first][shark.pos.second].q.push(shark);
 			}
-			if (board[i][j].second.size() > 0) board[i][j].second.front().ismove = false;
 		}
 	}
 }
 
-void fishing_shark()
+void hunt_Shark(int fisher_pos)
 {
-	for (int i = 1, fisher = 0; i <= m; i++)
+	for (int j = 1; j <= R; j++)
 	{
-		fisher += 1;
+		if (board[j][fisher_pos].q.empty() != true)
+		{
+			answer += board[j][fisher_pos].q.front().size;
+			board[j][fisher_pos].q.pop();
+			break;
+		}
+	}
+}
 
-		for (int j = 1; j <= n; j++) {
-			if (board[j][fisher].first == 1) {
-				hunting_sum += board[j][fisher].second.front().size;
-				board[j][fisher].first = 0;
-				board[j][fisher].second.pop();
-				break;
+void InitVariable() {
+	for (int i = 1; i <= R; i++) {
+		for (int j = 1; j <= C; j++) {
+			if (board[i][j].q.empty() != true) {
+				shark_q.push(board[i][j].q.front());
+				board[i][j].q.pop();
 			}
 		}
-		shark_moving();
-		shark_fight();
 	}
+}
+
+void solve()
+{
+	for (int i = 1; i <= C; i++)
+	{
+		hunt_Shark(i);
+		InitVariable();
+		move();
+		merge();
+	}
+}
+
+char getIntToCharDir(int dir)
+{
+	if (dir == 1) return 'U';
+	else if (dir == 2) return 'D';
+	else if (dir == 3) return 'R';
+	else return 'L';
 }
 
 int main()
 {
-	cin >> n >> m >> shark_cnt;
+	cin >> R >> C >> M;
 
-	for (int i = 1; i <= shark_cnt; i++)
+	board = vector<vector<Board>>(R + 1, vector<Board>(C + 1));
+
+	for (int i = 0; i < M; i++)
 	{
 		int r, c, s, d, z;
 		scanf("%d %d %d %d %d", &r, &c, &s, &d, &z);
-		board[r][c].first = 1;
-		board[r][c].second.push(shark(s, d, z));
+		board[r][c].q.push(Shark(Pos_Pair(r, c), s, z, getIntToCharDir(d)));
 	}
-
-	fishing_shark();
-	cout << hunting_sum << endl;
+	solve();
+	cout << answer << endl;
 	return 0;
 }
