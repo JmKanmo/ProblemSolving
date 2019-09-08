@@ -4,52 +4,83 @@
 
 using namespace std;
 
-const int idx1_arr[] = { 0,0,1,-1 };
-const int idx2_arr[] = { 1,-1,0,0 };
+typedef pair<int, int> Pair;
 
-vector<vector<int>>map(9, vector<int>(9));
-vector<vector<bool>>visited(9, vector<bool>(9));
+const int idx1[] = { 0,0,1,-1 };
+const int idx2[] = { 1,-1,0,0 };
 
+int board[9][9];
+bool visited[9][9];
+vector<Pair> high;
+int MAX;
 int N, K;
 int answer;
 
-void dfs(vector<vector<int>>map, vector<vector<bool>>visited, int idx1,
-	int idx2,int cnt, bool isCut)
+void init()
 {
-	visited[idx1][idx2] = true;
-	answer = max(answer, cnt);
+	MAX = 0, answer = 0;
+	high.clear();
+
+	scanf("%d %d", &N, &K);
+
+	for (int i = 1; i <= N; i++)
+	{
+		for (int j = 1; j <= N; j++)
+		{
+			scanf("%d", &board[i][j]);
+			MAX = max(MAX, board[i][j]);
+		}
+	}
+
+	for (int i = 1; i <= N; i++)
+	{
+		for (int j = 1; j <= N; j++)
+		{
+			if (MAX == board[i][j])
+				high.push_back(Pair(i, j));
+		}
+	}
+}
+
+void dfs(Pair pos, int depth, bool isCut)
+{
+	answer = max(answer, depth);
 
 	for (int i = 0; i < 4; i++)
 	{
-		int n_idx1 = idx1 + idx1_arr[i];
-		int n_idx2 = idx2 + idx2_arr[i];
+		Pair next = Pair(pos.first + idx1[i], pos.second + idx2[i]);
 
-		if (n_idx1<1 || n_idx1>N || n_idx2<1 || n_idx2>N) continue;
-		if (visited[n_idx1][n_idx2]) continue;
+		if (next.first<1 || next.first>N || next.second<1 || next.second>N) continue;
+		if (visited[next.first][next.second]) continue;
 
-		if (map[idx1][idx2] <= map[n_idx1][n_idx2])
+		if (board[next.first][next.second] - K >= board[pos.first][pos.second]) continue;
+
+		if (board[pos.first][pos.second] <= board[next.first][next.second])
 		{
-			if (isCut != true)
+			if (isCut == false)
 			{
-				for (int depth = 1; depth <= K; depth++)
+				int base_depth = board[next.first][next.second];
+
+				for (int k = 1; k <= K; k++)
 				{
-					if (map[n_idx1][n_idx2] - depth < map[idx1][idx2])
+					int new_depth = base_depth - k;
+
+					if (board[pos.first][pos.second] > new_depth)
 					{
-						int temp = map[n_idx1][n_idx2];
-						map[n_idx1][n_idx2] -= depth;
-						visited[n_idx1][n_idx2] = true;
-						dfs(map, visited, n_idx1, n_idx2, cnt + 1, true);
-						visited[n_idx1][n_idx2] = false;
-						map[n_idx1][n_idx2] = temp;
+						visited[next.first][next.second] = true;
+						board[next.first][next.second] = new_depth;
+						dfs(next, depth + 1, true);
+						visited[next.first][next.second] = false;
+						board[next.first][next.second] = base_depth;
 					}
 				}
 			}
 		}
 		else
 		{
-			visited[n_idx1][n_idx2] = true;
-			dfs(map, visited, n_idx1, n_idx2, cnt + 1, isCut);
-			visited[n_idx1][n_idx2] = false;
+			visited[next.first][next.second] = true;
+			dfs(next, depth + 1, isCut);
+			visited[next.first][next.second] = false;
 		}
 	}
 }
@@ -57,38 +88,21 @@ void dfs(vector<vector<int>>map, vector<vector<bool>>visited, int idx1,
 int main()
 {
 	int test;
-
 	cin >> test;
 
 	for (int t = 1; t <= test; t++)
 	{
-		scanf("%d %d", &N, &K);
+		init();
 
-		int high = 0;
-		answer = 0;
-
-		for (int i = 1; i <= N; i++)
+		for (int i = 0; i < high.size(); i++)
 		{
-			for (int j = 1; j <= N; j++)
-			{
-				scanf("%d", &map[i][j]);
-				high = max(high, map[i][j]);
-			}
+			visited[high[i].first][high[i].second] = true;
+			dfs(high[i], 1, false);
+			visited[high[i].first][high[i].second] = false;
 		}
 
-		for (int i = 1; i <= N; i++)
-		{
-			for (int j = 1; j <= N; j++)
-			{
-				if (map[i][j] == high)
-				{
-					//dfs함수호출
-					dfs(map, visited, i, j, 1, false);
-				}
-			}
-		}
 		printf("#%d %d\n", t, answer);
 	}
+
 	return 0;
 }
-
