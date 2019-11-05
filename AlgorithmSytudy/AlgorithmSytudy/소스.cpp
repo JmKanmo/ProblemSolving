@@ -1,9 +1,17 @@
+#include <iostream>
 #include <string>
 #include <vector>
+#include <stack>
+#include <queue>
+#include <map>
+#include<algorithm>
 
 using namespace std;
 
-int solution(vector<int> citations) {
-	int answer = 0;
-	return answer;
+
+int main()
+{
+
+
+	return 0;
 }
