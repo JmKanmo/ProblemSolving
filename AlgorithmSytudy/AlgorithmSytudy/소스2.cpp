@@ -1,9 +1,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <map>
-#include <queue>
-#include <stack>
 #include <algorithm>
 
 using namespace std;
@@ -11,6 +8,9 @@ using namespace std;
 
 int main()
 {
+	ios_base::sync_with_stdio(false);
+	cout.tie(NULL);
+	cin.tie(NULL);
 
 
 	return 0;
