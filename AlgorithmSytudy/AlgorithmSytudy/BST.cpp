@@ -1,6 +1,11 @@
 #include <iostream>
 #include <vector>
+#include <cstring>
 #include <string>
+#include <stack>
+#include <queue>
+#include <map>
+#include <cmath>
 #include <algorithm>
 
 using namespace std;
@@ -102,6 +107,28 @@ void clearNode(BS_Tree* ptr)
 	free(ptr);
 }
 
+queue<int>q;
+
+void inOrderTraversal(BS_Tree*ptr,int n)
+{
+	if (ptr == NULL) 
+		return;
+
+	inOrderTraversal(ptr->left, n);
+
+	if (n == 1) {
+		q.push(ptr->key);
+		ptr->key = 0;
+	}
+	else {
+		ptr->key = q.front();
+		q.pop();
+	}
+
+	inOrderTraversal(ptr->right, n);
+}
+
+/*
 int deleteNode(int key)
 {
 	int ret = 2e9;
@@ -147,6 +174,7 @@ int deleteNode(int key)
 	}
 	return ret;
 }
+*/
 
 int main()
 {
@@ -155,6 +183,7 @@ int main()
 	insertNode(100);
 	insertNode(80);
 	insertNode(45);
+
 	clearNode(root);
 	return 0;
 }

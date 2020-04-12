@@ -1,27 +1,21 @@
 #include <iostream>
 #include <vector>
-#include <cstring>
 #include <string>
+#include <cstring>
+#include <stack>
 #include <queue>
+#include <map>
+#include <set>
+#include <cmath>
 #include <algorithm>
 
 using namespace std;
 
-int N, D, M;
-
-void init()
-{
-	cin >> N >> M >> D;
-
-
-}
-
 int main()
 {
-	ios_base::sync_with_stdio(false);
+	ios_base::sync_with_stdio(0);
 	cout.tie(0);
 	cin.tie(0);
-
 
 	return 0;
 }
