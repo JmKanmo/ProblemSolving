@@ -1,101 +1,92 @@
 #include <iostream>
-#include <string>
 #include <vector>
+#include <string>
+#include <cstring>
 #include <stack>
 #include <queue>
-#include <cstring>
-#include <algorithm>
+#include <set>
 #include <map>
+#include <cmath>
+#include <ctime>
+#include <algorithm>
 
 using namespace std;
 
-typedef pair<pair<int, int>, int> Pair;
+typedef pair<int, pair<int, int>> Pair;
 
-const int idx_1[] = { 0,0,1,-1 };
-const int idx_2[] = { 1,-1,0,0 };
-const int idx_3[] = { -1,-2,-2,-1,1,2,2,1 };
-const int idx_4[] = { -2,-1,1,2,-2,-1,1,2 };
+const int horse_idx1[] = { -1,-2,-2,-1,1,2,2,1 };
+const int horse_idx2[] = { -2,-1,1,2,-2,-1,1,2 };
+const int monkey_idx1[] = { 0,0,1,-1 };
+const int monkey_idx2[] = { 1,-1,0,0 };
 
 int K;
 int W, H;
 int board[201][201];
-int visited[201][201][31];
-int step[201][201][31];
+int visited[201][201][32];
+int steps[201][201][32];
 
 void init()
 {
 	cin >> K;
 	cin >> W >> H;
-
-	for (int i = 1; i <= H; i++)
-	{
-		for (int j = 1; j <= W; j++)
-		{
+	for (int i = 1; i <= H; i++) {
+		for (int j = 1; j <= W; j++) {
 			cin >> board[i][j];
 		}
 	}
 }
 
-bool check_range(pair<int, int>pos) {
-	if (pos.first<1 || pos.first>H || pos.second<1 || pos.second>W) return true;
-	else return false;
-}
-
-int bfs()
+void bfs()
 {
 	queue<Pair>q;
-	q.push(Pair(make_pair(1, 1), 0));
+	q.push(Pair(0, make_pair(1, 1)));
 	visited[1][1][0] = 1;
 
 	while (q.empty() != true)
 	{
 		Pair elem = q.front();
-		pair<int, int> pos = elem.first;
-		int cnt = elem.second;
 		q.pop();
+		int step = elem.first;
+		pair<int, int> pos = elem.second;
 
-		if (pos == make_pair(H, W))
-		{
-			return step[H][W][cnt];
+		if (pos.first == H && pos.second == W) {
+			cout << visited[pos.first][pos.second][step] - 1 << endl;
+			return;
 		}
 
-		if (cnt < K)
+		if (step < K)
 		{
 			for (int i = 0; i < 8; i++)
 			{
-				pair<int, int>next_pos = make_pair(pos.first + idx_3[i], pos.second + idx_4[i]);
-				if (check_range(next_pos)) continue;
-				if (!visited[next_pos.first][next_pos.second][cnt + 1] && board[next_pos.first][next_pos.second] == 0)
-				{
-					visited[next_pos.first][next_pos.second][cnt + 1] = 1;
-					q.push(Pair(next_pos, cnt + 1));
-					step[next_pos.first][next_pos.second][cnt + 1] = step[pos.first][pos.second][cnt] + 1;
-				}
+				pair<int, int> next = make_pair(pos.first + horse_idx1[i], pos.second + horse_idx2[i]);
+
+				if (next.first<1 || next.first>H || next.second<1 || next.second>W
+					|| visited[next.first][next.second][step + 1] || board[next.first][next.second]) continue;
+
+				visited[next.first][next.second][step + 1] = 1;
+				q.push(Pair(step + 1, next));
 			}
 		}
-
 		for (int i = 0; i < 4; i++)
 		{
-			pair<int, int>next_pos = make_pair(pos.first + idx_1[i], pos.second + idx_2[i]);
-			if (check_range(next_pos)) continue;
-			if (!visited[next_pos.first][next_pos.second][cnt] && board[next_pos.first][next_pos.second] == 0)
-			{
-				visited[next_pos.first][next_pos.second][cnt] = 1;
-				q.push(Pair(next_pos, cnt));
-				step[next_pos.first][next_pos.second][cnt] = step[pos.first][pos.second][cnt] + 1;
-			}
+			pair<int, int> next = make_pair(pos.first + monkey_idx1[i], pos.second + monkey_idx2[i]);
+
+			if (next.first<1 || next.first>H || next.second<1 || next.second>W
+				|| visited[next.first][next.second][step] || board[next.first][next.second]) continue;
+
+			visited[next.first][next.second][step] = 1;
+			q.push(Pair(step, next));
 		}
 	}
-	return -1;
+	cout << -1 << endl;
 }
 
 int main()
 {
-	ios_base::sync_with_stdio(false);
+	ios_base::sync_with_stdio(0);
 	cout.tie(0);
 	cin.tie(0);
-
 	init();
-	cout << bfs() << endl;
+	bfs();
 	return 0;
 }
